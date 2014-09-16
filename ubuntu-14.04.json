@@ -1,0 +1,76 @@
+{
+  "variables": {
+    "build_version": "{{env `BUILD_VERSION`}}"
+  },
+  "builders": [
+    {
+      "boot_command": [
+        "<esc><esc><enter><wait>",
+        "/install/vmlinuz noapic ",
+        "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+        "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+        "hostname={{ .Name }} ",
+        "fb=false debconf/frontend=noninteractive ",
+        "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+        "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+        "initrd=/install/initrd.gz -- <enter>"
+      ],
+      "boot_wait": "10s",
+      "disk_size": 204800,
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "guest_os_type": "Ubuntu_64",
+      "headless": true,
+      "http_directory": "http",
+      "iso_checksum": "4d94f6111b8fe47da94396180ce499d8c0bb44f3",
+      "iso_checksum_type": "sha1",
+      "iso_url": "http://releases.ubuntu.com/14.04/ubuntu-14.04-server-amd64.iso",
+      "name": "ubuntu-14.04-x86_64",
+      "vm_name": "socorro-ubuntu-{{timestamp}}",
+      "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_username": "vagrant",
+      "ssh_wait_timeout": "90m",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "512"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "description": "Socorro - A distributed system for collecting, processing, and analyzing crash reports",
+  "post-processors": [
+    {
+      "output": "../build/packer/{{ .BuildName }}-{{ user `build_version` }}.box",
+      "type": "vagrant"
+    }
+  ],
+  "provisioners": [
+    {
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "scripts": [
+        "scripts/common/sshd.sh",
+        "scripts/common/sudoers.sh",
+        "scripts/common/vagrant.sh",
+        "scripts/common/virtualbox.sh",
+        "scripts/ubuntu/update.sh",
+        "scripts/ubuntu/puppet.sh",
+        "scripts/ubuntu/cleanup.sh",
+        "scripts/ubuntu/networking.sh",
+        "scripts/common/zerodisk.sh"
+      ],
+      "type": "shell"
+    }
+  ]
+}
+

@@ -1,0 +1,67 @@
+{
+  "variables": {
+    "build_version": "{{env `BUILD_VERSION`}}"
+  },
+  "builders": [
+    {
+      "boot_command": [
+        "<tab> text ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks.cfg<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "disk_size": 204800,
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "guest_os_type": "RedHat_64",
+      "http_directory": "http",
+      "iso_checksum": "0d9dc37b5dd4befa1c440d2174e88a87",
+      "iso_checksum_type": "md5",
+      "iso_url": "http://mirror.rackspace.com/CentOS/6.5/isos/x86_64/CentOS-6.5-x86_64-minimal.iso",
+      "name": "centos-6.5-x86_64",
+      "headless": true,
+      "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_username": "vagrant",
+      "ssh_wait_timeout": "90m",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "512"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ]
+      ],
+      "vm_name": "socorro-centos-{{ user `build_version` }}"
+    }
+  ],
+  "description": "Socorro - A distributed system for collecting, processing, and analyzing crash reports",
+  "post-processors": [
+    {
+      "output": "../build/packer/{{ .BuildName }}-{{ user `build_version` }}.box",
+      "type": "vagrant"
+    }
+  ],
+  "provisioners": [
+    {
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "scripts": [
+        "scripts/centos/fix-slow-dns.sh",
+        "scripts/common/sshd.sh",
+        "scripts/common/sudoers.sh",
+        "scripts/common/vagrant.sh",
+        "scripts/common/virtualbox.sh",
+        "scripts/centos/puppet.sh",
+        "scripts/centos/cleanup.sh",
+        "scripts/common/zerodisk.sh"
+      ],
+      "type": "shell"
+    }
+  ]
+}
+
